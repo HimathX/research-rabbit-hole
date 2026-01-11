@@ -78,7 +78,7 @@ def parse_llama_guard_output(output: str) -> LlamaGuardOutput:
 class LlamaGuard:
     def __init__(self) -> None:
         if settings.GROQ_API_KEY is None:
-            print("GROQ_API_KEY not set, skipping LlamaGuard")
+            # print("GROQ_API_KEY not set, skipping LlamaGuard")
             self.model = None
             return
         self.model = get_model(GroqModelName.LLAMA_GUARD_4_12B).with_config(tags=["skip_stream"])
@@ -105,6 +105,40 @@ class LlamaGuard:
         compiled_prompt = self._compile_prompt(role, messages)
         result = await self.model.ainvoke([HumanMessage(content=compiled_prompt)])
         return parse_llama_guard_output(str(result.content))
+
+
+async def llama_guard_input(state: dict):
+    """Check the safety of the last user message."""
+    messages = state.get("messages", [])
+    if not messages:
+        return {}
+        
+    last_message = messages[-1]
+    # Check safety for HumanMessage
+    if isinstance(last_message, HumanMessage) or (isinstance(last_message, dict) and last_message.get("type") == "human"):
+        # If it's a dict (from TypedDict state), convert or extract content. 
+        # But commonly in LangGraph state, it's a list of Message objects.
+        
+        # Guard: check if configured
+        if settings.GROQ_API_KEY is None:
+             return {}
+
+        guard = LlamaGuard()
+        if not guard.model:
+            return {}
+            
+        # Ensure message is object for ainvoke
+        if isinstance(last_message, dict):
+             msg_obj = HumanMessage(content=last_message.get("content", ""))
+        else:
+             msg_obj = last_message
+
+        assessment = await guard.ainvoke("User", [msg_obj])
+        
+        if assessment.safety_assessment == SafetyAssessment.UNSAFE:
+            raise ValueError(f"Safety Policy Violation: The request was flagged as unsafe. Categories: {', '.join(assessment.unsafe_categories)}")
+            
+    return {}
 
 
 if __name__ == "__main__":

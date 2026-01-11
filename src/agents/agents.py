@@ -22,10 +22,20 @@ class Agent:
     graph_like: AgentGraphLike
 
 
+class SimpleLazyAgent(LazyLoadingAgent):
+    def __init__(self, loader):
+        super().__init__()
+        self.loader = loader
+
+    async def load(self) -> None:
+        self._graph = self.loader()
+        self._loaded = True
+
+
 agents: dict[str, Agent] = {
     "deep-research-agent": Agent(
         description="A multi-agent deep research system with RAG and file system access.",
-        graph_like=LazyLoadingAgent(lambda: import_module("agents.deep_research_agent.supervisor").deep_research_agent),
+        graph_like=SimpleLazyAgent(lambda: import_module("agents.deep_research_agent.supervisor").deep_research_agent),
     ),
 }
 

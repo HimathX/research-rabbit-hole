@@ -18,12 +18,13 @@ from langfuse import Langfuse  # type: ignore[import-untyped]
 from langfuse.langchain import (
     CallbackHandler,  # type: ignore[import-untyped]
 )
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.store.memory import InMemoryStore
 from langgraph.types import Command, Interrupt
 from langsmith import Client as LangsmithClient
 
 from agents import DEFAULT_AGENT, AgentGraph, get_agent, get_all_agent_info, load_agent
 from core import settings
-from memory import initialize_database, initialize_store
 from schema import (
     ChatHistory,
     ChatHistoryInput,
@@ -66,36 +67,35 @@ def verify_bearer(
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Configurable lifespan that initializes the appropriate database checkpointer, store,
-    and agents with async loading - for example for starting up MCP clients.
+    and agents with async loading.
     """
     try:
-        # Initialize both checkpointer (for short-term memory) and store (for long-term memory)
-        async with initialize_database() as saver, initialize_store() as store:
-            # Set up both components
-            if hasattr(saver, "setup"):  # ignore: union-attr
-                await saver.setup()
-            # Only setup store for Postgres as InMemoryStore doesn't need setup
-            if hasattr(store, "setup"):  # ignore: union-attr
-                await store.setup()
+        # Initialize in-memory checkpointer and store (User removed Postgres/memory module)
+        saver = MemorySaver()
+        store = InMemoryStore()
 
-            # Configure agents with both memory components and async loading
-            agents = get_all_agent_info()
-            for a in agents:
-                try:
-                    await load_agent(a.key)
-                    logger.info(f"Agent loaded: {a.key}")
-                except Exception as e:
-                    logger.error(f"Failed to load agent {a.key}: {e}")
-                    # Continue with other agents rather than failing startup
-
+        # Configure agents with both memory components and async loading
+        agents = get_all_agent_info()
+        for a in agents:
+            try:
+                await load_agent(a.key)
+                logger.info(f"Agent loaded: {a.key}")
+                
+                # Only configure if load succeeded
                 agent = get_agent(a.key)
                 # Set checkpointer for thread-scoped memory (conversation history)
                 agent.checkpointer = saver
                 # Set store for long-term memory (cross-conversation knowledge)
                 agent.store = store
-            yield
+            except Exception as e:
+                logger.error(f"Failed to load agent {a.key}: {e}")
+                # If the DEFAULT agent fails, we MUST crash - can't run without it
+                if a.key == DEFAULT_AGENT:
+                    raise RuntimeError(f"CRITICAL: Default agent '{a.key}' failed to load: {e}") from e
+                # Continue with other agents rather than failing startup
+        yield
     except Exception as e:
-        logger.error(f"Error during database/store/agents initialization: {e}")
+        logger.error(f"Error during agent initialization: {e}")
         raise
 
 

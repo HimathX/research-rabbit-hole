@@ -138,15 +138,15 @@ class TextToSpeech:
         """
         provider = os.getenv("VOICE_TTS_PROVIDER")
 
-        # If provider not set, voice features are disabled
-        if not provider:
-            logger.debug("VOICE_TTS_PROVIDER not set, TTS disabled")
+        # If provider not set or commented out, voice features are disabled
+        if not provider or provider.strip().startswith("#"):
+            logger.debug("VOICE_TTS_PROVIDER not set or commented, TTS disabled")
             return None
 
         try:
             # Create instance with provider from environment
             # Validates provider and raises ValueError if invalid
-            return cls(provider=cast(Provider, provider))
+            return cls(provider=cast(Provider, provider.strip()))
         except Exception as e:
             # Log error but don't crash - allow app to continue without voice
             logger.error(f"Failed to create TTS provider: {e}", exc_info=True)

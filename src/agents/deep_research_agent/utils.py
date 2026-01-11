@@ -145,7 +145,7 @@ def format_search_output(summarized_results: dict) -> str:
 
 # ===== TOOLS =====
 
-@tool(parse_docstring=True)
+@tool
 def tavily_search(
     query: str,
     max_results: Annotated[int, InjectedToolArg] = 3,
@@ -171,7 +171,7 @@ def tavily_search(
     summarized_results = process_search_results(unique_results)
     return format_search_output(summarized_results)
 
-@tool(parse_docstring=True)
+@tool
 def think_tool(reflection: str) -> str:
     """Tool for strategic reflection on research progress and decision-making.
 
@@ -185,7 +185,7 @@ def think_tool(reflection: str) -> str:
     """
     return f"Reflection recorded: {reflection}"
 
-@tool(parse_docstring=True)
+@tool
 def list_local_files(directory_path: str = ".") -> str:
     """List files in a local directory.
     
@@ -212,7 +212,7 @@ def list_local_files(directory_path: str = ".") -> str:
     except Exception as e:
         return f"Error listing files: {e}"
 
-@tool(parse_docstring=True)
+@tool
 def read_local_file(file_path: str) -> str:
     """Read the contents of a local file.
     

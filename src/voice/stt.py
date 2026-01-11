@@ -130,15 +130,15 @@ class SpeechToText:
         """
         provider = os.getenv("VOICE_STT_PROVIDER")
 
-        # If provider not set, voice features are disabled
-        if not provider:
-            logger.debug("VOICE_STT_PROVIDER not set, STT disabled")
+        # If provider not set or commented out, voice features are disabled
+        if not provider or provider.strip().startswith("#"):
+            logger.debug("VOICE_STT_PROVIDER not set or commented, STT disabled")
             return None
 
         try:
             # Create instance with provider from environment
             # Validates provider and raises ValueError if invalid
-            return cls(provider=cast(Provider, provider))
+            return cls(provider=cast(Provider, provider.strip()))
         except Exception as e:
             # Log error but don't crash - allow app to continue without voice
             logger.error(f"Failed to create STT provider: {e}", exc_info=True)
