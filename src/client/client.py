@@ -177,13 +177,18 @@ class AgentClient:
     def _parse_stream_line(self, line: str) -> ChatMessage | str | None:
         line = line.strip()
         if line.startswith("data: "):
-            data = line[6:]
+            data = line[6:].strip()
             if data == "[DONE]":
+                return None
+            # Skip empty data lines
+            if not data:
                 return None
             try:
                 parsed = json.loads(data)
-            except Exception as e:
-                raise Exception(f"Error JSON parsing message from server: {e}")
+            except json.JSONDecodeError:
+                # Log and skip malformed JSON data instead of crashing
+                # This can happen with partial/truncated SSE events
+                return None
             match parsed["type"]:
                 case "message":
                     # Convert the JSON formatted message to an AnyMessage
@@ -251,7 +256,10 @@ class AgentClient:
                     if line.strip():
                         parsed = self._parse_stream_line(line)
                         if parsed is None:
-                            break
+                            # Check if this was the [DONE] signal
+                            if line.strip() == "data: [DONE]":
+                                break
+                            continue
                         yield parsed
         except httpx.HTTPError as e:
             raise AgentClientError(f"Error: {e}")
@@ -295,26 +303,43 @@ class AgentClient:
             request.agent_config = agent_config
         if user_id:
             request.user_id = user_id
-        async with httpx.AsyncClient() as client:
-            try:
-                async with client.stream(
+        
+        client = httpx.AsyncClient()
+        response = None
+        try:
+            response = await client.send(
+                client.build_request(
                     "POST",
                     f"{self.base_url}/{self.agent}/stream",
                     json=request.model_dump(),
                     headers=self._headers,
                     timeout=self.timeout,
-                ) as response:
-                    response.raise_for_status()
-                    async for line in response.aiter_lines():
-                        if line.strip():
-                            parsed = self._parse_stream_line(line)
-                            if parsed is None:
-                                break
-                            # Don't yield empty string tokens as they cause generator issues
-                            if parsed != "":
-                                yield parsed
-            except httpx.HTTPError as e:
-                raise AgentClientError(f"Error: {e}")
+                ),
+                stream=True,
+            )
+            response.raise_for_status()
+            async for line in response.aiter_lines():
+                if line.strip():
+                    parsed = self._parse_stream_line(line)
+                    if parsed is None:
+                        # Check if this was the [DONE] signal
+                        if line.strip() == "data: [DONE]":
+                            break
+                        continue
+                    # Don't yield empty string tokens as they cause generator issues
+                    if parsed != "":
+                        yield parsed
+        except GeneratorExit:
+            # Generator was closed (e.g., user cancelled in Streamlit)
+            # Clean up resources without raising
+            pass
+        except httpx.HTTPError as e:
+            raise AgentClientError(f"Error: {e}")
+        finally:
+            # Ensure proper cleanup of response and client
+            if response is not None:
+                await response.aclose()
+            await client.aclose()
 
     async def acreate_feedback(
         self, run_id: str, key: str, score: float, kwargs: dict[str, Any] = {}

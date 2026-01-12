@@ -45,7 +45,7 @@ For the verification message when no clarification is needed:
 """
 
 transform_messages_into_research_topic_prompt = """You will be given a set of messages that have been exchanged so far between yourself and the user. 
-Your job is to translate these messages into a more detailed and concrete research question that will be used to guide the research.
+Your job is to translate these messages into a detailed research brief that will guide the research process.
 
 The messages that have been exchanged so far between yourself and the user are:
 <Messages>
@@ -54,9 +54,13 @@ The messages that have been exchanged so far between yourself and the user are:
 
 Today's date is {date}.
 
-You will return a single research question that will be used to guide the research.
+You will return a structured research brief with the following components:
 
-Guidelines:
+1. **research_brief**: A detailed research question/brief that captures all user requirements
+2. **key_areas**: A list of 2-5 main topics or areas that should be investigated
+3. **research_depth**: One of "shallow", "moderate", or "deep" based on the complexity and scope
+
+Guidelines for research_brief:
 1. Maximize Specificity and Detail
 - Include all known user preferences and explicitly list key attributes or dimensions to consider.
 - It is important that all details from the user are included in the instructions.
@@ -85,6 +89,18 @@ Guidelines:
 - For academic or scientific queries, prefer linking directly to the original paper or official journal publication rather than survey papers or secondary summaries.
 - For people, try linking directly to their LinkedIn profile, or their personal website if they have one.
 - If the query is in a specific language, prioritize sources published in that language.
+
+Guidelines for key_areas:
+- Extract 2-5 distinct, non-overlapping topics that need to be researched
+- Each area should be specific enough to delegate to a sub-agent
+- Areas should cover the full scope of the user's request
+- Examples: ["pricing comparison", "feature analysis", "user reviews", "integration capabilities"]
+
+Guidelines for research_depth:
+- "shallow": Quick overview, fact-finding, simple lists (1-2 sub-agents, 1-2 iterations)
+- "moderate": Balanced research, main points covered thoroughly (2-3 sub-agents, 3-5 iterations)
+- "deep": Comprehensive investigation, multiple angles explored (3+ sub-agents, 5+ iterations)
+- Consider: complexity of topic, user's apparent urgency, scope of questions asked
 """
 
 research_agent_prompt =  """You are a research assistant conducting research on the user's input topic. For context, today's date is {date}.

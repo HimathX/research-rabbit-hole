@@ -35,7 +35,7 @@ class SimpleLazyAgent(LazyLoadingAgent):
 agents: dict[str, Agent] = {
     "deep-research-agent": Agent(
         description="A multi-agent deep research system with RAG and file system access.",
-        graph_like=SimpleLazyAgent(lambda: import_module("agents.deep_research_agent.supervisor").deep_research_agent),
+        graph_like=SimpleLazyAgent(lambda: import_module("agents.deep_research_agent.deep_researcher").deep_researcher),
     ),
 }
 

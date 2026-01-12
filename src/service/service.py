@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 import json
 import logging
@@ -319,11 +320,21 @@ async def message_generator(
                     # that the model is asking for a tool to be invoked.
                     # So we only print non-empty content.
                     yield f"data: {json.dumps({'type': 'token', 'content': convert_message_content_to_string(content)})}\n\n"
+    except (asyncio.CancelledError, GeneratorExit):
+        # Client disconnected before the research completed - this is expected for long-running tasks
+        logger.warning(f"Client disconnected during streaming for agent {agent_id} - research task cancelled")
+        # Don't yield here - connection is already closed
     except Exception as e:
         logger.error(f"Error in message generator: {e}")
-        yield f"data: {json.dumps({'type': 'error', 'content': 'Internal server error'})}\n\n"
+        try:
+            yield f"data: {json.dumps({'type': 'error', 'content': 'Internal server error'})}\n\n"
+        except Exception:
+            pass
     finally:
-        yield "data: [DONE]\n\n"
+        try:
+            yield "data: [DONE]\n\n"
+        except Exception:
+            pass
 
 
 def _create_ai_message(parts: dict) -> AIMessage:

@@ -10,7 +10,7 @@ from langchain_core.messages import SystemMessage, ToolMessage, AIMessage
 from langchain_core.tools import tool
 from langchain_experimental.utilities import PythonREPL
 from langgraph.graph import StateGraph, START, END, MessagesState
-from langgraph.pregel import RetryPolicy
+from langgraph.types import RetryPolicy
 
 from core import get_model, settings
 

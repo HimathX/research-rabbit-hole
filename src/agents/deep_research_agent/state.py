@@ -22,6 +22,10 @@ class DeepResearchState(MessagesState):
     
     # Detailed research brief that guides the overall research direction
     research_brief: str = ""
+    # Key areas to cover during research (from scoping phase)
+    brief_key_areas: list[str] = []
+    # Research depth: shallow, moderate, or deep (from scoping phase)
+    brief_depth: str = "moderate"
     # Processed and structured notes ready for final report generation
     notes: Annotated[list[str], operator.add] = []
     # Counter tracking the number of research iterations performed
@@ -84,4 +88,26 @@ class ResearchQuestion(BaseModel):
     """Schema for research brief generation."""
     research_brief: str = Field(
         description="A research question that will be used to guide the research.",
+    )
+
+
+class ResearchBrief(BaseModel):
+    """Enhanced schema for research brief generation with structured metadata.
+    
+    This model captures not just the research question, but also the key areas
+    to investigate and the appropriate depth of research needed.
+    """
+    research_brief: str = Field(
+        description="A detailed research brief that will guide the research process. "
+                    "Should include context, specific questions to answer, and any constraints.",
+    )
+    key_areas: list[str] = Field(
+        default_factory=list,
+        description="Main topics or areas to cover during research. "
+                    "These become the focus areas for sub-agent delegation.",
+    )
+    research_depth: str = Field(
+        default="moderate",
+        description="The depth of research required: 'shallow' for quick overviews, "
+                    "'moderate' for balanced research, 'deep' for comprehensive investigation.",
     )

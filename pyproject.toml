@@ -60,6 +60,7 @@ dependencies = [
     "tavily-python>=0.7.17",
     "nest-asyncio>=1.6.0",
     "langchain-experimental>=0.4.1",
+    "langgraph-cli[inmem]>=0.4.7",
 ]
 
 [dependency-groups]

@@ -4,35 +4,36 @@ This module implements a supervisor pattern where:
 1. A supervisor agent coordinates research activities and delegates tasks
 2. Multiple researcher agents work on specific sub-topics independently
 3. Results are aggregated and compressed for final reporting
+
+Note: The scoping phase (user clarification and research brief generation) has been
+extracted to research_agent_scope.py and is orchestrated by deep_researcher.py.
 """
 
 import asyncio
 from typing import Literal
 
 from langchain_core.messages import (
+    AIMessage,
     HumanMessage, 
     SystemMessage, 
     ToolMessage,
     filter_messages
 )
 from langgraph.graph import StateGraph, START, END
-from langgraph.types import Command, interrupt, StreamWriter
+from langgraph.types import Command, StreamWriter
 
 from agents.deep_research_agent.prompts import (
     lead_researcher_prompt, 
-    final_report_generation_prompt,
-    clarify_with_user_instructions
+    final_report_generation_prompt
 )
 from agents.deep_research_agent.research_agent import researcher_agent
 from agents.deep_research_agent.state import (
     DeepResearchState, 
     ConductResearch, 
     ResearchComplete,
-    ClarifyWithUser,
     DelegateToAnalyst
 )
 from agents.deep_research_agent.utils import get_today_str, think_tool
-from agents.llama_guard import llama_guard_input  # SAFETY
 from core import get_model, settings
 
 # Ensure async compatibility
@@ -49,7 +50,7 @@ supervisor_model = get_model(settings.DEFAULT_MODEL)
 supervisor_model_with_tools = supervisor_model.bind_tools(supervisor_tools)
 
 # System constants
-max_researcher_iterations = 6
+max_researcher_iterations = 10
 max_concurrent_researchers = 3
 
 # ===== SUPERVISOR NODES =====
@@ -58,65 +59,48 @@ def get_notes_from_tool_calls(messages: list) -> list[str]:
     """Extract research notes from ToolMessage objects in supervisor message history."""
     return [tool_msg.content for tool_msg in filter_messages(messages, include_types="tool")]
 
-async def scope_research(state: DeepResearchState) -> Command[Literal["supervisor"]]:
-    """Analyze the user request and ask for clarification if needed (Human-in-the-Loop)."""
-    messages = state.get("messages", [])
-    
-    # If we already have a research brief, skip scoping
-    if state.get("research_brief"):
-        return Command(goto="supervisor")
 
-    # Use structured output to decide if clarification is needed
-    scoping_model = supervisor_model.with_structured_output(ClarifyWithUser)
-    
-    prompt = clarify_with_user_instructions.format(
-        messages=messages,
-        date=get_today_str()
-    )
-    
-    try:
-        response: ClarifyWithUser = await scoping_model.ainvoke([HumanMessage(content=prompt)])
-    except Exception as e:
-        # Fallback if structured output fails
-        print(f"Scoping failed: {e}")
-        return Command(goto="supervisor", update={"research_brief": messages[-1].content})
+def get_depth_guidance(depth: str) -> str:
+    """Generate research guidance based on depth setting."""
+    depth_configs = {
+        "shallow": "Focus on high-level overview only. Use 1-2 sub-agents maximum. Prioritize speed over comprehensiveness.",
+        "moderate": "Balance depth and breadth. Use 2-3 sub-agents for distinct topics. Cover main points thoroughly.",
+        "deep": "Conduct comprehensive investigation. Use up to max sub-agents. Explore all angles and gather extensive evidence.",
+    }
+    return depth_configs.get(depth, depth_configs["moderate"])
 
-    if response.need_clarification:
-        # INTERRUPT: Pause execution and ask user
-        user_feedback = interrupt(response.question)
-        
-        # Add the interaction to history so the model knows clarity was provided
-        new_messages = [
-            HumanMessage(content=f"Clarification question: {response.question}"),
-            HumanMessage(content=f"User Answer: {user_feedback}")
-        ]
-        
-        # Recursively re-scope with new info
-        return Command(
-            goto="scope_research", 
-            update={"messages": new_messages}
-        )
-    
-    # Ready to proceed
-    return Command(
-        goto="supervisor", 
-        update={"research_brief": response.verification} # Use the verification/summary as the brief
-    )
 
 async def supervisor(state: DeepResearchState, writer: StreamWriter = lambda _: None) -> Command[Literal["supervisor_tools"]]:
-    """Coordinate research activities."""
+    """Coordinate research activities using the research brief and key areas from scoping phase."""
     supervisor_messages = state.get("messages", [])
-    research_brief = state.get("research_brief", supervisor_messages[-1].content) # Fallback
+    research_brief = state.get("research_brief", "")
+    brief_key_areas = state.get("brief_key_areas", [])
+    brief_depth = state.get("brief_depth", "moderate")
+    
+    # Fallback if no research brief (shouldn't happen with proper orchestration)
+    if not research_brief and supervisor_messages:
+        research_brief = supervisor_messages[-1].content
 
     writer({"status": "Supervisor is planning research..."})
+
+    # Build enhanced system message with key areas and depth guidance
+    key_areas_text = ""
+    if brief_key_areas:
+        key_areas_text = f"\n\n**Key Areas to Cover:**\n" + "\n".join(f"- {area}" for area in brief_key_areas)
+    
+    depth_guidance = get_depth_guidance(brief_depth)
 
     # Prepare system message
     system_message = lead_researcher_prompt.format(
         date=get_today_str(), 
         max_concurrent_research_units=max_concurrent_researchers,
         max_researcher_iterations=max_researcher_iterations,
-        research_brief=research_brief # Inject the scoped brief
+        research_brief=research_brief + key_areas_text
     )
+    
+    # Add depth guidance to system message
+    system_message += f"\n\n**Research Depth Guidance ({brief_depth}):** {depth_guidance}"
+    
     # Ensure system message is first
     messages = [SystemMessage(content=system_message)] + supervisor_messages
 
@@ -263,19 +247,19 @@ async def compile_report(state: DeepResearchState, writer: StreamWriter = lambda
 
 supervisor_builder = StateGraph(DeepResearchState)
 
-# Nodes
-supervisor_builder.add_node("llama_guard_input", llama_guard_input) # Safety
-supervisor_builder.add_node("scope_research", scope_research)       # Interrupts
+# Nodes (scope_research is now handled by research_agent_scope.py)
 supervisor_builder.add_node("supervisor", supervisor)
 supervisor_builder.add_node("supervisor_tools", supervisor_tools)
 supervisor_builder.add_node("compile_report", compile_report)
 
-# Edges
-supervisor_builder.add_edge(START, "llama_guard_input")
-supervisor_builder.add_edge("llama_guard_input", "scope_research")
-# scope_research determines if it goes to interrupt or supervisor via Command
+# Edges - Start directly with supervisor (scoping is handled externally)
+supervisor_builder.add_edge(START, "supervisor")
 # supervisor determines if it goes to tools or report via Command
 # supervisor_tools determines if it loops back or report via Command
 # compile_report ends
 
-deep_research_agent = supervisor_builder.compile()
+# This is the supervisor-only graph (expects research_brief to be pre-populated)
+supervisor_graph = supervisor_builder.compile()
+
+# Keep backward compatibility alias
+deep_research_agent = supervisor_graph

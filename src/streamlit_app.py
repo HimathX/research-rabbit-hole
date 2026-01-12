@@ -453,6 +453,13 @@ async def draw_messages(
 
                 status.add_and_draw_task_data(task_data)
 
+            case "tool":
+                # Tool messages can appear independently when streaming from sub-agents
+                # or when the agent sends tool results outside the normal flow.
+                # Just record them if new; they're typically handled inline with AI messages.
+                if is_new:
+                    st.session_state.messages.append(msg)
+
             # In case of an unexpected message type, log an error and stop
             case _:
                 st.error(f"Unexpected ChatMessage type: {msg.type}")
