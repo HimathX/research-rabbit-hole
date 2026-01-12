@@ -262,4 +262,4 @@ supervisor_builder.add_edge(START, "supervisor")
 supervisor_graph = supervisor_builder.compile()
 
 # Keep backward compatibility alias
-deep_research_agent = supervisor_graph
+supervisor_agent = supervisor_graph

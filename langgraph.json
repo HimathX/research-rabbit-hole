@@ -2,8 +2,10 @@
   "python_version": "3.12",
   "dependencies": ["./src"],
   "graphs": {
-    "deep_research_agent": "./src/agents/deep_research_agent/supervisor.py:deep_research_agent",
-    "data_analyst_agent": "./src/agents/data_analyst_agent.py:data_analyst_agent"
+    "supervisor_agent": "./src/agents/deep_research_agent/supervisor.py:supervisor_agent",
+    "data_analyst_agent": "./src/agents/data_analyst_agent.py:data_analyst_agent",
+    "deep_research_agent": "./src/agents/deep_research_agent/deep_researcher.py:deep_researcher"
+
   },
   "env": "./.env"
 }
