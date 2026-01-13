@@ -4,7 +4,8 @@
   "graphs": {
     "supervisor_agent": "./src/agents/deep_research_agent/supervisor.py:supervisor_agent",
     "data_analyst_agent": "./src/agents/data_analyst_agent.py:data_analyst_agent",
-    "deep_research_agent": "./src/agents/deep_research_agent/deep_researcher.py:deep_researcher"
+    "deep_research_agent": "./src/agents/deep_research_agent/deep_researcher.py:deep_researcher",
+    "scoping_agent": "./src/agents/deep_research_agent/research_agent_scope.py:scope_research"
 
   },
   "env": "./.env"

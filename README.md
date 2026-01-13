@@ -220,11 +220,7 @@ Contributions are welcome! Please feel free to submit a Pull Request. Currently 
    pre-commit install
    ```
 
-3. Run the tests using pytest:
 
-   ```sh
-   pytest
-   ```
 
 ## License
 

@@ -33,7 +33,7 @@ async def run_scoping(state: DeepResearchState, writer: StreamWriter = lambda _:
     Execute the scoping phase to clarify user intent and generate research brief.
     
     This node:
-    1. Evaluates if clarification is needed (may interrupt for user input)
+    1. Evaluates if clarification is needed 
     2. Generates a detailed research brief with key areas and depth
     3. Passes the enriched state to the supervisor phase
     """
@@ -44,12 +44,13 @@ async def run_scoping(state: DeepResearchState, writer: StreamWriter = lambda _:
     
     writer({"status": f"Research brief generated. Depth: {result.get('brief_depth', 'moderate')}"})
     
-    # Return the updated state fields from scoping
+    # Return the updated state fields from scoping.
+    # Note: Do NOT return messages here as scoping already updates them via Command.update,
+    # and returning them again causes duplication in the stream.
     return {
         "research_brief": result.get("research_brief", ""),
         "brief_key_areas": result.get("brief_key_areas", []),
         "brief_depth": result.get("brief_depth", "moderate"),
-        "messages": result.get("messages", []),
     }
 
 

@@ -12,7 +12,7 @@ from typing import Literal
 
 from langchain_core.messages import HumanMessage, AIMessage, get_buffer_string
 from langgraph.graph import StateGraph, START, END
-from langgraph.types import Command, interrupt
+from langgraph.types import Command
 
 from agents.deep_research_agent.prompts import (
     clarify_with_user_instructions, 
@@ -60,20 +60,17 @@ def clarify_with_user(state: DeepResearchState) -> Command[Literal["write_resear
 
     # Route based on clarification need
     if response.need_clarification:
-        # INTERRUPT: Pause execution and ask user for clarification
-        user_feedback = interrupt(response.question)
-        
-        # Add user's response to messages and loop back for re-evaluation
+        # End the graph with an AI message asking for clarification
         return Command(
-            goto="clarify_with_user",
-            update={"messages": [HumanMessage(content=user_feedback)]}
+            goto="__end__",
+            update={"messages": [AIMessage(content=response.question)]},
         )
-    else:
-        # Proceed to generate research brief
-        return Command(
-            goto="write_research_brief", 
-            update={"messages": [AIMessage(content=response.verification)]}
-        )
+
+    # Proceed to generate research brief
+    return Command(
+        goto="write_research_brief", 
+        update={"messages": [AIMessage(content=response.verification)]}
+    )
 
 
 async def clarify_with_user_async(state: DeepResearchState) -> Command[Literal["write_research_brief", "__end__"]]:
@@ -99,20 +96,17 @@ async def clarify_with_user_async(state: DeepResearchState) -> Command[Literal["
 
     # Route based on clarification need
     if response.need_clarification:
-        # INTERRUPT: Pause execution and ask user for clarification
-        user_feedback = interrupt(response.question)
-        
-        # Add user's response to messages and loop back for re-evaluation
+        # End the graph with an AI message asking for clarification
         return Command(
-            goto="clarify_with_user",
-            update={"messages": [HumanMessage(content=user_feedback)]}
+            goto="__end__",
+            update={"messages": [AIMessage(content=response.question)]},
         )
-    else:
-        # Proceed to generate research brief
-        return Command(
-            goto="write_research_brief", 
-            update={"messages": [AIMessage(content=response.verification)]}
-        )
+
+    # Proceed to generate research brief
+    return Command(
+        goto="write_research_brief", 
+        update={"messages": [AIMessage(content=response.verification)]}
+    )
 
 
 def write_research_brief(state: DeepResearchState) -> dict:
