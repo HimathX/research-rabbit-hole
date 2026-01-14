@@ -4,8 +4,8 @@ from importlib import import_module
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.pregel import Pregel
 
-from agents.lazy_agent import LazyLoadingAgent
-from schema import AgentInfo
+from src.agents.lazy_agent import LazyLoadingAgent
+from src.schema import AgentInfo
 
 DEFAULT_AGENT = "deep-research-agent"
 

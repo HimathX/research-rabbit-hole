@@ -22,19 +22,19 @@ from langchain_core.messages import (
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import Command, StreamWriter
 
-from agents.deep_research_agent.prompts import (
+from src.agents.deep_research_agent.prompts import (
     lead_researcher_prompt, 
     final_report_generation_prompt
 )
-from agents.deep_research_agent.research_agent import researcher_agent
-from agents.deep_research_agent.state import (
+from src.agents.deep_research_agent.research_agent import researcher_agent
+from src.agents.deep_research_agent.state import (
     DeepResearchState, 
     ConductResearch, 
     ResearchComplete,
     DelegateToAnalyst
 )
-from agents.deep_research_agent.utils import get_today_str, think_tool
-from core import get_model, settings
+from src.agents.deep_research_agent.utils import get_today_str, think_tool
+from src.core import get_model, settings
 
 # Ensure async compatibility
 try:
@@ -190,7 +190,7 @@ async def supervisor_tools(state: DeepResearchState, writer: StreamWriter = lamb
         # 3. Delegate to Data Analyst (Async)
         delegate_analyst_calls = [tc for tc in most_recent_message.tool_calls if tc["name"] == "DelegateToAnalyst"]
         if delegate_analyst_calls:
-            from agents.data_analyst_agent import data_analyst_agent # Lazy import
+            from src.agents.data_analyst_agent import data_analyst_agent # Lazy import
             
             writer({"status": "Delegating to Data Analyst..."})
             coros = [

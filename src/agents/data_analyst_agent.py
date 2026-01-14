@@ -12,7 +12,7 @@ from langchain_experimental.utilities import PythonREPL
 from langgraph.graph import StateGraph, START, END, MessagesState
 from langgraph.types import RetryPolicy
 
-from core import get_model, settings
+from src.core import get_model, settings
 
 # ===== CONFIGURATION =====
 

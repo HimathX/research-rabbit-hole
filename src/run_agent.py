@@ -10,7 +10,7 @@ from langgraph.graph.state import CompiledStateGraph
 
 load_dotenv()
 
-from agents import DEFAULT_AGENT, get_agent  # noqa: E402
+from src.agents import DEFAULT_AGENT, get_agent  # noqa: E402
 
 # The default agent uses StateGraph.compile() which returns CompiledStateGraph
 agent = cast(CompiledStateGraph, get_agent(DEFAULT_AGENT))

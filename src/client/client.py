@@ -5,7 +5,7 @@ from typing import Any
 
 import httpx
 
-from schema import (
+from src.schema import (
     ChatHistory,
     ChatHistoryInput,
     ChatMessage,

@@ -21,9 +21,9 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import Command, StreamWriter
 
-from agents.deep_research_agent.state import DeepResearchState
-from agents.deep_research_agent.research_agent_scope import scope_research
-from agents.deep_research_agent.supervisor import supervisor_graph
+from src.agents.deep_research_agent.state import DeepResearchState
+from src.agents.deep_research_agent.research_agent_scope import scope_research
+from src.agents.deep_research_agent.supervisor import supervisor_graph
 
 
 # ===== ORCHESTRATOR NODES =====

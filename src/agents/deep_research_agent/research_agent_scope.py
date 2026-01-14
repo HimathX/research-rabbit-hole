@@ -14,17 +14,17 @@ from langchain_core.messages import HumanMessage, AIMessage, get_buffer_string
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import Command
 
-from agents.deep_research_agent.prompts import (
+from src.agents.deep_research_agent.prompts import (
     clarify_with_user_instructions, 
     transform_messages_into_research_topic_prompt
 )
-from agents.deep_research_agent.state import (
+from src.agents.deep_research_agent.state import (
     DeepResearchState,
     ClarifyWithUser, 
     ResearchBrief
 )
-from agents.deep_research_agent.utils import get_today_str
-from core import get_model, settings
+from src.agents.deep_research_agent.utils import get_today_str
+from src.core import get_model, settings
 
 # ===== CONFIGURATION =====
 

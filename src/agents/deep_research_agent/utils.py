@@ -13,8 +13,8 @@ from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool, InjectedToolArg
 from tavily import TavilyClient
 
-from agents.tools import database_search
-from core import get_model, settings
+from src.agents.tools import database_search
+from src.core import get_model, settings
 
 # Use local imports for schemas to avoid circular dependency issues if they arise, 
 # but here we'll assume they will be in state.py or prompts.py
@@ -77,7 +77,7 @@ def tavily_search_multiple(
 
 def summarize_webpage_content(webpage_content: str) -> str:
     """Summarize webpage content using the configured summarization model."""
-    from agents.deep_research_agent.prompts import summarize_webpage_prompt # Deferred import
+    from src.agents.deep_research_agent.prompts import summarize_webpage_prompt # Deferred import
 
     try:
         # Set up structured output model for summarization

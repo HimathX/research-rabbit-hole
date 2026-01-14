@@ -1,4 +1,4 @@
-from agents.agents import (
+from src.agents.agents import (
     DEFAULT_AGENT,
     AgentGraph,
     AgentGraphLike,

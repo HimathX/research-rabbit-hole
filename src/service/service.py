@@ -24,9 +24,9 @@ from langgraph.store.memory import InMemoryStore
 from langgraph.types import Command, Interrupt
 from langsmith import Client as LangsmithClient
 
-from agents import DEFAULT_AGENT, AgentGraph, get_agent, get_all_agent_info, load_agent
-from core import settings
-from schema import (
+from src.agents import DEFAULT_AGENT, AgentGraph, get_agent, get_all_agent_info, load_agent
+from src.core import settings
+from src.schema import (
     ChatHistory,
     ChatHistoryInput,
     ChatMessage,
@@ -36,7 +36,7 @@ from schema import (
     StreamInput,
     UserInput,
 )
-from service.utils import (
+from src.service.utils import (
     convert_message_content_to_string,
     langchain_to_chat_message,
     remove_tool_calls,

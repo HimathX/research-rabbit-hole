@@ -5,7 +5,7 @@ import sys
 import uvicorn
 from dotenv import load_dotenv
 
-from core import settings
+from src.core import settings
 
 load_dotenv()
 

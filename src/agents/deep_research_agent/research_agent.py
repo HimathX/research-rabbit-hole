@@ -9,10 +9,10 @@ from typing import Literal
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage, filter_messages
 from langgraph.graph import StateGraph, START, END
 
-from agents.deep_research_agent.state import ResearcherState, ResearcherOutputState
-from agents.deep_research_agent.utils import research_tools, get_today_str
-from agents.deep_research_agent.prompts import research_agent_prompt, compress_research_system_prompt, compress_research_human_message
-from core import get_model, settings
+from src.agents.deep_research_agent.state import ResearcherState, ResearcherOutputState
+from src.agents.deep_research_agent.utils import research_tools, get_today_str
+from src.agents.deep_research_agent.prompts import research_agent_prompt, compress_research_system_prompt, compress_research_human_message
+from src.core import get_model, settings
 
 # ===== CONFIGURATION =====
 
