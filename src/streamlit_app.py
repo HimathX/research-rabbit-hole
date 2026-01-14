@@ -12,18 +12,8 @@ from client import AgentClient, AgentClientError
 from schema import ChatHistory, ChatMessage
 from schema.task_data import TaskData, TaskDataStatus
 
-# A Streamlit app for interacting with the langgraph agent via a simple chat interface.
-# The app has three main functions which are all run async:
 
-# - main() - sets up the streamlit app and high level structure
-# - draw_messages() - draws a set of chat messages - either replaying existing messages
-#   or streaming new ones.
-# - handle_feedback() - Draws a feedback widget and records feedback from the user.
-
-# The app heavily uses AgentClient to interact with the agent's FastAPI endpoints.
-
-
-APP_TITLE = "Agent Service Toolkit"
+APP_TITLE = "Athena Research Agent"
 APP_ICON = "🧰"
 USER_ID_COOKIE = "user_id"
 
@@ -58,6 +48,9 @@ async def main() -> None:
         page_icon=APP_ICON,
         menu_items={},
     )
+    
+    # Hide detailed error tracebacks in production
+    st.set_option('client.showErrorDetails', False)
 
     # Hide the streamlit upper-right chrome
     st.html(
@@ -115,7 +108,7 @@ async def main() -> None:
         st.header(f"{APP_ICON} {APP_TITLE}")
 
         ""
-        "Full toolkit for running an AI agent service built with LangGraph, FastAPI and Streamlit"
+        "An autonomous deep research architect built with LangGraph; designed to crawl, analyze, and synthesize complex datasets into actionable intelligence."
         ""
 
         if st.button(":material/chat: New Chat", use_container_width=True):
@@ -175,9 +168,9 @@ async def main() -> None:
         if st.button(":material/upload: Share/resume chat", use_container_width=True):
             share_chat_dialog()
 
-        "[View the source code](https://github.com/JoshuaC215/agent-service-toolkit)"
+        "[View the source code](https://github.com/HimathX/research-rabbit-hole)"
         st.caption(
-            "Made with :material/favorite: by [Joshua](https://www.linkedin.com/in/joshua-k-carroll/) in Oakland"
+            "Made with :material/favorite: by [Himath](https://www.linkedin.com/in/himath-nimpura) in Sri Lanka"
         )
 
     # Draw existing messages
@@ -195,7 +188,7 @@ async def main() -> None:
                 WELCOME = """Hello! I'm an AI-powered Company Policy & HR assistant with access to AcmeTech's Employee Handbook.
                 I can help you find information about benefits, remote work, time-off policies, company values, and more. Ask me anything!"""
             case _:
-                WELCOME = "Hello! I'm an AI agent. Ask me anything!"
+                WELCOME = "**Deep Research Engine Active**: Initialize a query to begin synthesis."
 
         with st.chat_message("ai"):
             st.write(WELCOME)
