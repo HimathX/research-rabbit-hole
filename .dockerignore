@@ -1,13 +1,95 @@
+# Docker build context exclusions
+# Prevents unnecessary files from being added to Docker images
+
+# Version control
 .git
 .gitignore
-.env
-**/__pycache__
-**/*.pyc
-**/*.pyo
-**/*.pyd
-.Python
-env
+.gitattributes
+
+# Python development
+.venv
 venv
+env
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+build
+develop-eggs
+dist
+downloads
+eggs
+.eggs
+lib
+lib64
+parts
+sdist
+var
+wheels
+pip-wheel-metadata
+*.egg-info
+.installed.cfg
+*.egg
+MANIFEST
+
+# Testing
+.pytest_cache
+.coverage
+htmlcov
+.tox
+.hypothesis
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Environment files (use mounted/environment variables instead)
+.env
+.env.local
+.env.*.local
+
+# Credentials and secrets
+privatecredentials/
+credentials/
+secrets/
+*.key
+*.pem
+*.p12
+
+# Documentation and media
+docs/
+media/
+*.md
+LICENSE
+
+# Docker
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+docker/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.circleci/
+azure-pipelines.yml
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.log
 .venv
 *.db
 privatecredentials/*

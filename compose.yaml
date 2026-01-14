@@ -1,39 +1,96 @@
+networks:
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+  frontend:
+    driver: bridge
+
 services:
   postgres:
-    image: postgres:16
-    ports:
-      - "5432:5432"
+    image: postgres:16-alpine
+    container_name: research_postgres
+    networks:
+      - backend
+    # NOTE: Do NOT expose port 5432 publicly in production
+    # Uncomment only for local development:
+    # ports:
+    #   - "5432:5432"
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=${POSTGRES_DB:-agent_service}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-agent_service}
+      POSTGRES_INITDB_ARGS: "-c log_statement=all"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   agent_service:
     build:
       context: .
       dockerfile: docker/Dockerfile.service
+    container_name: research_agent_service
+    networks:
+      - backend
+      - frontend
     ports:
       - "8080:8080"
     env_file:
       - .env
+    environment:
+      DATABASE_TYPE: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-agent_service}
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/info"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
-      retries: 5
-    # Volume mount of development-only credentials since compose watch doesn't sync ignored files and doesn't do initial sync when the service starts
-    volumes:
-      - ./privatecredentials:/privatecredentials
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "1"
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    # SECURITY: Removed credentials volume mount - use environment variables only
+    # volumes:
+    #   - ./privatecredentials:/privatecredentials
     develop:
       watch:
         - path: src/agents/
@@ -48,35 +105,56 @@ services:
         - path: src/core/
           action: sync+restart
           target: /app/core/
-        - path: src/memory/
-          action: sync+restart
-          target: /app/memory/
   streamlit_app:
     build:
       context: .
       dockerfile: docker/Dockerfile.app
+    container_name: research_streamlit_app
+    networks:
+      - frontend
     ports:
       - "8501:8501"
     depends_on:
-      - agent_service
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8501/healthz"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      agent_service:
+        condition: service_healthy
     environment:
-      - AGENT_URL=http://agent_service:8080
+      AGENT_URL: http://agent_service:8080
+      STREAMLIT_SERVER_PORT: 8501
+      STREAMLIT_SERVER_ADDRESS: 0.0.0.0
+      STREAMLIT_SERVER_HEADLESS: "true"
+      STREAMLIT_CLIENT_SHOW_ERROR_DETAILS: "false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     develop:
       watch:
         - path: src/client/
           action: sync+restart
-          target: /app/client/
+          target: /app/src/client/
         - path: src/schema/
           action: sync+restart
-          target: /app/schema/
+          target: /app/src/schema/
         - path: src/streamlit_app.py
           action: sync+restart
-          target: /app/streamlit_app.py
+          target: /app/src/streamlit_app.py
 
 volumes:
   postgres_data:
+    driver: local
