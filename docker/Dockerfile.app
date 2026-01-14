@@ -31,6 +31,9 @@ RUN chown -R appuser:appuser /app
 # Switch to non-root user
 USER appuser
 
+# Set PYTHONPATH so Python can find src modules
+ENV PYTHONPATH=/app
+
 # Expose Streamlit port
 EXPOSE 8501
 

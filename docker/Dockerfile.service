@@ -39,9 +39,11 @@ COPY src/ ./src/
 RUN chown -R appuser:appuser /app
 USER appuser
 
+# Set PYTHONPATH to /app/src so Python finds 'agents', 'core', 'schema', etc. directly
+ENV PYTHONPATH=/app/src
+
 EXPOSE 8080
 
-# The healthcheck remains the same
 HEALTHCHECK --interval=10s --timeout=5s --retries=3 \
     CMD curl -f http://localhost:8080/info || exit 1
 

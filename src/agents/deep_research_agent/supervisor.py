@@ -37,11 +37,11 @@ from src.agents.deep_research_agent.utils import get_today_str, think_tool
 from src.core import get_model, settings
 
 # Ensure async compatibility
-try:
-    import nest_asyncio
-    nest_asyncio.apply()
-except ImportError:
-    pass
+# try:
+#     import nest_asyncio
+#     nest_asyncio.apply()
+# except ImportError:
+#     pass
 
 # ===== CONFIGURATION =====
 
