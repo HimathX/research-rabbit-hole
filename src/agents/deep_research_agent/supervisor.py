@@ -104,6 +104,9 @@ async def supervisor(state: DeepResearchState, writer: StreamWriter = lambda _: 
     # Ensure system message is first
     messages = [SystemMessage(content=system_message)] + supervisor_messages
 
+    # Rate limiting: 150 RPM safe delay
+    await asyncio.sleep(0.4)
+    
     # Make decision
     response = await supervisor_model_with_tools.ainvoke(messages)
 
@@ -237,6 +240,9 @@ async def compile_report(state: DeepResearchState, writer: StreamWriter = lambda
         date=get_today_str(),
         findings=findings
     )
+    
+    # Rate limiting: 150 RPM safe delay
+    await asyncio.sleep(0.4)
     
     response = await supervisor_model.ainvoke([HumanMessage(content=prompt)])
     writer({"status": "Report complete!"})
